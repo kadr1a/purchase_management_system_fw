@@ -1,0 +1,14 @@
+[
+    {
+        "id": "S001",
+        "name": "ТехноСнаб",
+        "contact": "sales@example.com",
+        "rating": 5
+    },
+    {
+        "id": "S002",
+        "name": "КомпьютерМаркет",
+        "contact": "+7 900 000-00-00",
+        "rating": 4
+    }
+]

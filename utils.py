@@ -1,18 +1,27 @@
-"""Вспомогательные функции для начального сценария ПР1."""
+"""Общие функции ввода и отображения."""
 
 
-def calculate_total(unit_price: float, quantity: int) -> float:
-    """Возвращает предварительную стоимость заявки."""
-    return unit_price * quantity
+def read_float(prompt: str) -> float:
+    """Считывает положительное число с плавающей точкой."""
+    value = float(input(prompt))
+    if value <= 0:
+        raise ValueError("Значение должно быть больше нуля.")
+    return value
 
 
-def validate_purchase_data(unit_price: float, quantity: int, budget: float) -> bool:
-    """Проверяет базовую корректность введённых данных."""
-    return unit_price > 0 and quantity > 0 and budget >= 0
+def read_int(prompt: str) -> int:
+    """Считывает положительное целое число."""
+    value = int(input(prompt))
+    if value <= 0:
+        raise ValueError("Количество должно быть больше нуля.")
+    return value
 
 
-def check_budget(total: float, budget: float) -> str:
-    """Определяет, укладывается ли заявка в доступный бюджет."""
-    if total <= budget:
-        return "Заявка укладывается в бюджет. Можно передать её на согласование."
-    return "Сумма заявки превышает бюджет. Требуется корректировка."
+def show_items(items: list[dict], title: str) -> None:
+    """Выводит список записей."""
+    print(f"\n--- {title} ---")
+    if not items:
+        print("Список пуст.")
+        return
+    for item in items:
+        print(item)
