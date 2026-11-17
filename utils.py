@@ -15,13 +15,3 @@ def read_int(prompt: str) -> int:
     if value <= 0:
         raise ValueError("Количество должно быть больше нуля.")
     return value
-
-
-def show_items(items: list[dict], title: str) -> None:
-    """Выводит список записей."""
-    print(f"\n--- {title} ---")
-    if not items:
-        print("Список пуст.")
-        return
-    for item in items:
-        print(item)

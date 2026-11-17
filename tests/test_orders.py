@@ -5,22 +5,26 @@ from applications import (
     approve_application,
     create_application,
 )
+from models import Product, PurchaseOrder, Supplier
 from orders import cancel_order, create_order
 
 
 def test_create_and_cancel_order():
     application = create_application([], "Закупка оборудования")
-    product = {"id": "P1", "name": "Мышь", "price": 1000}
-    add_product_to_application(application, product, 3)
+    add_product_to_application(application, Product("P1", "Мышь", 1000), 3)
     approve_application(application)
-    supplier = {"id": "S1", "name": "Поставщик"}
+    supplier = Supplier("S1", "Поставщик", "contact", 5)
     order = create_order([], application, supplier)
-    assert order["total"] == 3000
+    assert isinstance(order, PurchaseOrder)
+    assert order.total == 3000
+    assert order.application is application
+    assert order.supplier is supplier
     cancel_order(order)
-    assert order["status"] == "Отменён"
+    assert order.status == "Отменён"
 
 
 def test_order_requires_approved_application():
     application = create_application([], "Закупка")
+    supplier = Supplier("S1", "Поставщик", "contact", 5)
     with pytest.raises(ValueError):
-        create_order([], application, {"id": "S1", "name": "Поставщик"})
+        create_order([], application, supplier)
