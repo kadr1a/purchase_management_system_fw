@@ -1,98 +1,164 @@
 # Система управления закупками
 
-Индивидуальный проект по дисциплине «Технологии разработки приложений на базе фреймворков».
-Проект содержит консольную реализацию предметной области и веб-интерфейс на Django.
+Индивидуальный проект по дисциплине «Технологии разработки приложений на базе фреймворков». Проект продолжает предыдущие практические работы: консольная версия и исходные JSON/SQL-данные сохранены, веб-интерфейс переведён на Django ORM (ПР9).
 
-## Возможности предметной области
+## Предметная область и возможности
 
 - каталог товаров с ценами и описаниями;
-- список поставщиков с контактами и рейтингом;
-- заявки на закупку с позициями товаров и количеством;
+- поставщики с контактами и рейтингом;
+- заявки на закупку со списком товаров и количеством;
 - заказы поставщикам, связанные с заявками и поставщиками;
-- просмотр карточек сущностей в веб-интерфейсе.
+- карточки сущностей, поиск, фильтрация и сортировка;
+- статистика по количеству сущностей, суммам заказов и ценам товаров;
+- административный CRUD через Django Admin.
 
-## Структура данных SQLite (ПР7)
+## Стек
 
-Реляционная база хранится в `data/procurement.sqlite3`. Схема описана в `sql/schema.sql`.
+- Python 3.12+;
+- Django 5.2;
+- SQLite через Django ORM;
+- pytest, pytest-django, flake8;
+- Bootstrap 5.
 
-| Таблица | Основные поля | Связи |
+## Модели и связи
+
+| Django-модель | Поля | Связи |
 |---|---|---|
-| `products` | `id TEXT PRIMARY KEY`, `name TEXT`, `price REAL`, `description TEXT` | Товары в позициях заявок |
-| `suppliers` | `id TEXT PRIMARY KEY`, `name TEXT`, `contact TEXT`, `rating INTEGER` | Поставщики заказов |
-| `applications` | `id TEXT PRIMARY KEY`, `purpose TEXT`, `status TEXT` | Заявки |
-| `application_items` | `id INTEGER PRIMARY KEY`, `application_id TEXT`, `product_id TEXT`, `quantity INTEGER` | Внешние ключи на `applications.id` и `products.id` |
-| `purchase_orders` | `id TEXT PRIMARY KEY`, `application_id TEXT UNIQUE`, `supplier_id TEXT`, `total REAL`, `status TEXT` | Внешние ключи на `applications.id` и `suppliers.id` |
+| `Product` (`products_web`) | строковый PK `id`, `name`, `price`, `description` | товар используется в позициях заявок |
+| `Supplier` (`suppliers_web`) | строковый PK `id`, `name`, `contact`, `rating` | один поставщик связан со многими заказами |
+| `Application` (`applications_web`) | строковый PK `id`, `purpose`, `status` | заявка содержит позиции товаров |
+| `ApplicationItem` (`applications_web`) | `application`, `product`, `quantity` | `ForeignKey` на заявку (`CASCADE`) и товар (`PROTECT`) |
+| `PurchaseOrder` (`orders_web`) | строковый PK `id`, `application`, `supplier`, `total`, `status` | `OneToOneField` на заявку (`PROTECT`), `ForeignKey` на поставщика (`PROTECT`) |
 
-В схеме используются `NOT NULL`, `CHECK`, `DEFAULT`, первичные и внешние ключи, а также индексы для часто фильтруемых полей. Связь заявки и товаров реализована отдельной таблицей `application_items`, поскольку одна заявка может включать несколько товаров, а один товар может встречаться в разных заявках.
+Для связей заданы `related_name`: `Application.items`, `Product.application_items`, `Supplier.purchase_orders`, `Application.purchase_order`. Строковые первичные ключи сохраняют идентификаторы прежней системы. Для цены, рейтинга, количества и суммы добавлены ограничения целостности.
 
-## Импорт JSON
+## ORM в представлениях
 
-Исходные JSON-файлы сохранены в `data/` и остаются частью предыдущей реализации. Перенос выполняется скриптом `db/import_json.py`:
+Представления больше не импортируют `db.repository` и не выполняют SQL-запросы. Используются:
 
-```bash
-python -m db.import_json
-```
+- `all()`, `filter()`, `exclude()`, `get_object_or_404()` / `get()`;
+- фильтры `icontains`, `istartswith`, `iexact`, числовые сравнения;
+- поиск по нескольким полям и полям связанных моделей;
+- `order_by()` с белыми списками разрешённых полей;
+- `values()`, `annotate()`, `aggregate()`;
+- `Count`, `Sum`, `Avg`, `Min`, `Max`;
+- `select_related()` и `prefetch_related()`;
+- `Paginator` с сохранением GET-параметров в навигации.
 
-Импорт можно запускать повторно: таблицы очищаются в порядке, учитывающем внешние ключи, затем данные вставляются параметризованными запросами в одной транзакции. При ошибке выполняется `rollback()`.
+SQLite по умолчанию не выполняет Unicode case-folding для кириллицы в `LIKE`. В `orm_utils.py` добавлена небольшая совместимая функция поиска: ORM `icontains` дополняется поиском Python `casefold()`, поэтому поиск на русском не зависит от регистра. Параметры сортировки ограничены белым списком; некорректные значения фильтров не приводят к падению страницы.
 
-Подключение и инициализация базы находятся в `db/database.py`. Каждое соединение включает `PRAGMA foreign_keys = ON` и `sqlite3.Row`.
+## Страницы
 
-## SQL-запросы
+| URL | Назначение |
+|---|---|
+| `/` | главная страница и сводные показатели |
+| `/products/` | каталог, поиск, фильтр по минимальной цене, сортировка, пагинация |
+| `/products/<id>/` | карточка товара |
+| `/suppliers/` | поставщики, поиск и фильтр по рейтингу |
+| `/suppliers/<id>/` | карточка поставщика |
+| `/applications/` | заявки, поиск, фильтр по статусу, исключение статуса, сортировка, пагинация |
+| `/applications/<id>/` | заявка и её товарные позиции |
+| `/orders/` | заказы, поиск по заказу/заявке/поставщику, фильтр по статусу, пагинация |
+| `/orders/<id>/` | карточка заказа |
+| `/statistics/` | агрегированная статистика |
 
-В `sql/queries.sql` сохранены 12 запросов предметной области:
+Несуществующие объекты возвращают 404. Невалидные параметры поиска/фильтрации обрабатываются без аварийного завершения.
 
-1. список товаров;
-2. поиск товаров по минимальной цене (`WHERE`);
-3. список поставщиков;
-4. фильтрация поставщиков по рейтингу (`WHERE`);
-5. заявки и количество позиций (`LEFT JOIN`, `GROUP BY`);
-6. состав заявки с товарами (`JOIN`);
-7. полная информация о заказах (`JOIN` нескольких таблиц);
-8. агрегированное количество основных сущностей (`COUNT`);
-9. количество товарных позиций по заявкам (`GROUP BY`);
-10. заявки с количеством позиций выше порога (`HAVING`);
-11. стоимость позиций по заявкам (`SUM`, `GROUP BY`);
-12. заказы по статусу (`WHERE`).
+## Структура проекта
 
-Параметры пользовательского ввода передаются через `?`, без конкатенации строк и f-строк. SQL, используемый Django-представлениями, находится в `db/repository.py`.
-
-## Веб-страницы
-
-- `/` — главная страница и сводные показатели;
-- `/products/` — каталог товаров, поиск по минимальной цене и карточки товаров;
-- `/suppliers/` — поставщики, фильтрация по рейтингу и карточки поставщиков;
-- `/applications/` — заявки с количеством позиций и суммой;
-- `/orders/` — заказы с данными связанных заявок и поставщиков;
-- `/statistics/` — статистика по сущностям и суммам заявок.
-
-Представления получают данные через `sqlite3`, настраивают `row_factory = sqlite3.Row` через общий модуль подключения и передают результаты в Django-шаблоны через `context`. Django ORM на ПР7 не используется. Консольная реализация и JSON-хранилище предыдущих практических работ сохранены.
+- `procurement/` — настройки и корневые URL Django;
+- `homepage/` — главная страница и статистика;
+- `products_web/`, `suppliers_web/`, `applications_web/`, `orders_web/` — модели, миграции, представления, маршруты и шаблоны разделов;
+- `templates/` — базовый шаблон, навигация и 404;
+- `db/` — исходные SQL-модули ПР7 и скрипты инспекции/переноса данных;
+- `models/`, `storage.py`, `main.py` — предметные классы и консольная версия предыдущих работ;
+- `data/` — исходные JSON и SQLite ПР7;
+- `sql/` — исходная SQL-схема и запросы ПР7;
+- `tests/` — тесты предметной области и Django ORM.
 
 ## Установка и запуск
+
+Из корня проекта:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python -m db.import_json
 python manage.py check
+python manage.py migrate
+```
+
+### Перенос данных ПР7
+
+Перед переносом можно посмотреть структуру и количество записей исходной SQLite:
+
+```bash
+python db/inspect_source_db.py
+```
+
+Перенос из `data/procurement.sqlite3` в новую БД Django (`db.sqlite3`):
+
+```bash
+python db/import_sqlite_to_orm.py
+```
+
+Исходная база ПР7 не изменяется. Перенос выполняется в транзакции, использует `update_or_create()` по прежним ID и допускает повторный запуск. Альтернативный импорт из исходных JSON-файлов:
+
+```bash
+python db/import_json_to_orm.py
+```
+
+Проверка данных:
+
+```bash
+python manage.py shell
+```
+
+```python
+from products_web.models import Product
+from suppliers_web.models import Supplier
+from applications_web.models import Application, ApplicationItem
+from orders_web.models import PurchaseOrder
+
+print(Product.objects.count(), Supplier.objects.count())
+print(Application.objects.count(), ApplicationItem.objects.count())
+print(PurchaseOrder.objects.count())
+```
+
+Запуск сервера:
+
+```bash
 python manage.py runserver
 ```
 
-Откройте `http://127.0.0.1:8000/`.
+Откройте `http://127.0.0.1:8000/`. Для CRUD откройте `/admin/` и войдите под созданным суперпользователем (`python manage.py createsuperuser`).
 
 ## Проверки
 
 ```bash
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py showmigrations
 pytest -v
 flake8 . --extend-exclude=venv,.venv
 ```
 
+Тесты покрывают связи и обратные связи, поиск, фильтрацию, агрегаты, карточки, 404, отмену заказа и прежние функции проекта.
+
+## Важные замечания
+
+- Миграции находятся в `*/migrations/` и должны храниться в Git.
+- `db.sqlite3` — локальная ORM-база, не добавлять её в Git.
+- `data/procurement.sqlite3`, SQL-схема и JSON сохранены как исходные данные предыдущих практических работ.
+- Старые `db/database.py` и `db/repository.py` оставлены для демонстрации ПР7; веб-представления их больше не используют.
+- Консольное приложение и доменные классы не удалены.
+
 ## Git
 
-Коммиты практической работы должны начинаться с `PR7:`, например:
+Коммиты этой практической работы начинаются с `PR9:`:
 
 ```bash
 git add .
-git commit -m "PR7: add SQLite database and SQL queries"
+git commit -m "PR9: переход на Django ORM"
 git push
 ```

@@ -3,6 +3,9 @@
     <h2 class="h5 card-title">{{ application.purpose }}</h2>
     <p>Статус: {{ application.status }}</p>
     <p>Товарных позиций: {{ application.item_count }}</p>
+    {% if application.items.all %}<p class="small text-muted">Товары:
+        {% for item in application.items.all %}{{ item.product.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    </p>{% endif %}
     <p class="price-value">{{ application.application_total|floatformat:2 }} ₽</p>
     <a class="btn btn-outline-primary align-self-start" href="{% url 'applications:detail' application.id %}">Подробнее</a>
 </div></article>

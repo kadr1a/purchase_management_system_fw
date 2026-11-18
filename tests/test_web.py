@@ -3,6 +3,48 @@ import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
 
+from decimal import Decimal
+
+from products_web.models import Product
+from suppliers_web.models import Supplier
+
+
+@pytest.fixture(autouse=True)
+def seed_catalog():
+    Product.objects.get_or_create(
+        pk="P001",
+        defaults={
+            "name": "Монитор 24 дюйма",
+            "price": Decimal("12500.00"),
+            "description": "IPS, Full HD",
+        },
+    )
+    Product.objects.get_or_create(
+        pk="P002",
+        defaults={
+            "name": "Клавиатура",
+            "price": Decimal("2800.00"),
+            "description": "Механическая",
+        },
+    )
+    Product.objects.get_or_create(
+        pk="P003",
+        defaults={
+            "name": "Мышь",
+            "price": Decimal("1500.00"),
+            "description": "Оптическая",
+        },
+    )
+    Supplier.objects.get_or_create(
+        pk="S001",
+        defaults={
+            "name": "ТехноСнаб",
+            "contact": "sales@example.com",
+            "rating": 5,
+        },
+    )
+
+
 pytestmark = pytest.mark.django_db
 
 

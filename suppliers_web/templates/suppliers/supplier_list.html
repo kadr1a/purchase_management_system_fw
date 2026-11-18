@@ -1,14 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Поставщики — Закупки{% endblock %}
+{% block title %}Поставщики — Закупки
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
+{% endblock %}
 {% block content %}
 <div class="page-heading"><div><p class="eyebrow">КОНТРАГЕНТЫ</p><h1>Поставщики</h1><p class="text-muted">Контактная информация и рейтинг организаций-поставщиков.</p></div></div>
 <form method="get" class="row g-2 align-items-end mb-3">
     <div class="col-auto"><label for="min_rating" class="form-label">Минимальный рейтинг</label><input class="form-control" id="min_rating" name="min_rating" type="number" min="1" max="5" value="{{ min_rating }}"></div>
     <div class="col-auto"><button class="btn btn-primary" type="submit">Фильтровать</button> <a class="btn btn-outline-secondary" href="{% url 'suppliers:list' %}">Сбросить</a></div>
 </form>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4"><label class="form-label" for="q">Поиск по названию или контакту</label><input class="form-control" id="q" name="q" value="{{ query }}"></div>
+    <div class="col-md-4"><label class="form-label" for="exact_name">Точное название</label><input class="form-control" id="exact_name" name="exact_name" value="{{ exact_name }}"></div>
+    <input type="hidden" name="min_rating" value="{{ min_rating }}">
+    <div class="col-auto"><button class="btn btn-primary">Применить</button></div>
+</form>
+
 <p class="result-count">Найдено поставщиков: {{ suppliers|length }}</p>
 <div class="row g-3">
 {% for supplier in suppliers %}<div class="col-md-6 col-xl-4">{% include "suppliers/includes/supplier_card.html" %}</div>
 {% empty %}<div class="col-12"><div class="empty-state">Поставщики по заданным условиям не найдены.</div></div>{% endfor %}
 </div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
 {% endblock %}

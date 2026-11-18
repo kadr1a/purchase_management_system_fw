@@ -1,11 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Товары — Закупки{% endblock %}
+{% block title %}Товары — Закупки
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
+{% endblock %}
 {% block content %}
 <div class="page-heading"><div><p class="eyebrow">КАТАЛОГ</p><h1>Товары</h1><p class="text-muted">Товары, доступные для включения в заявки на закупку.</p></div></div>
 <form method="get" class="row g-2 align-items-end mb-3">
     <div class="col-auto"><label for="min_price" class="form-label">Минимальная цена, ₽</label><input class="form-control" id="min_price" name="min_price" type="number" min="0" step="0.01" value="{{ min_price }}"></div>
     <div class="col-auto"><button class="btn btn-primary" type="submit">Найти</button> <a class="btn btn-outline-secondary" href="{% url 'products:list' %}">Сбросить</a></div>
 </form>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4"><label class="form-label" for="q">Поиск</label><input class="form-control" id="q" name="q" value="{{ query }}"></div>
+    <div class="col-md-3"><label class="form-label" for="sort">Сортировка</label><select class="form-select" id="sort" name="sort"><option value="name" {% if sort == "name" %}selected{% endif %}>По названию</option><option value="price" {% if sort == "price" %}selected{% endif %}>Сначала дешевле</option><option value="-price" {% if sort == "-price" %}selected{% endif %}>Сначала дороже</option></select></div>
+    <input type="hidden" name="min_price" value="{{ min_price }}">
+    <div class="col-auto"><button class="btn btn-primary">Применить</button></div>
+</form>
+
 <p class="result-count">Найдено товаров: {{ products|length }}</p>
 <div class="row g-3">
     {% for product in products %}
@@ -14,4 +31,12 @@
         <div class="col-12"><div class="empty-state">Товары по заданным условиям не найдены.</div></div>
     {% endfor %}
 </div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
 {% endblock %}

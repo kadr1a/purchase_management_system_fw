@@ -1,32 +1,49 @@
-"""Представления заказов поставщикам, использующие SQLite."""
+"""Список и карточка заказов через Django ORM."""
+from django.core.paginator import Paginator
+from django.db.models import F
+from django.shortcuts import get_object_or_404, render
 
-from django.shortcuts import render
-
-from db.repository import ORDER_LIST_SQL, fetch_all, fetch_one
+from .models import PurchaseOrder
+from orm_utils import casefold_search
 
 
 def orders(request):
-    """Показывает заказы с данными связанных заявок и поставщиков."""
-    items = fetch_all(ORDER_LIST_SQL)
-    return render(request, "orders/order_list.html", {"orders": items})
+    query = request.GET.get("q", "").strip()[:100]
+    status = request.GET.get("status", "").strip()
+    sort = request.GET.get("sort", "id")
+    sort_fields = {
+        "id": "id", "total": "total",
+        "supplier": "supplier__name", "application": "application__purpose",
+    }
+    items = PurchaseOrder.objects.all()
+    if query:
+        items = casefold_search(
+            items, query, ["id", "application__purpose", "supplier__name"],
+        )
+    if status in ["Оформлен", "Отменён"]:
+        items = items.filter(status=status)
+    elif status:
+        status = ""
+    items = items.annotate(
+        purpose=F("application__purpose"),
+        supplier_name=F("supplier__name"),
+    ).values(
+        "id", "total", "status", "application_id", "purpose", "supplier_name",
+    ).order_by(sort_fields.get(sort, "id"), "id")
+    page_obj = Paginator(items, 5).get_page(request.GET.get("page"))
+    return render(request, "orders/order_list.html", {
+        "orders": page_obj, "page_obj": page_obj, "query": query,
+        "status": status, "sort": sort,
+    })
 
 
 def order_detail(request, order_id):
-    """Передаёт заказ и сведения о заявке и поставщике в шаблон."""
-    order = fetch_one(
-        """
-        SELECT po.id, po.total, po.status, a.id AS application_id,
-               a.purpose, s.name AS supplier_name, s.contact
-        FROM purchase_orders AS po
-        JOIN applications AS a ON a.id = po.application_id
-        JOIN suppliers AS s ON s.id = po.supplier_id
-        WHERE po.id = ?
-        """,
-        (order_id,),
+    order = get_object_or_404(
+        PurchaseOrder.objects.select_related("application", "supplier"),
+        pk=order_id,
     )
-    return render(
-        request,
-        "orders/order_detail.html",
-        {"order": order},
-        status=404 if order is None else 200,
-    )
+    order.application_id_display = order.application_id
+    order.purpose = order.application.purpose
+    order.supplier_name = order.supplier.name
+    order.contact = order.supplier.contact
+    return render(request, "orders/order_detail.html", {"order": order})

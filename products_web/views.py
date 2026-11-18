@@ -1,38 +1,39 @@
-"""Представления каталога товаров, работающие с SQLite."""
+"""Каталог товаров и карточки с использованием Django ORM."""
+from decimal import Decimal, InvalidOperation
 
-from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, render
 
-from db.repository import PRODUCT_LIST_SQL, PRODUCT_SEARCH_SQL, fetch_all, fetch_one
+from .models import Product
+from orm_utils import casefold_search
 
 
 def products(request):
-    """Показывает каталог и поддерживает поиск по минимальной цене."""
+    query = request.GET.get("q", "").strip()[:100]
     min_price = request.GET.get("min_price", "").strip()
+    items = Product.objects.all()
+    error = None
+    if query:
+        items = casefold_search(items, query, ["name", "description"])
     if min_price:
         try:
-            price_value = float(min_price)
-            items = fetch_all(PRODUCT_SEARCH_SQL, (price_value,))
-        except ValueError:
-            items = fetch_all(PRODUCT_LIST_SQL)
+            price_value = Decimal(min_price)
+            if price_value < 0:
+                raise InvalidOperation
+            items = items.filter(price__gte=price_value)
+        except (InvalidOperation, ValueError):
+            error = "Укажите корректную неотрицательную цену."
             min_price = ""
-    else:
-        items = fetch_all(PRODUCT_LIST_SQL)
-    return render(
-        request,
-        "products/product_list.html",
-        {"products": items, "min_price": min_price},
-    )
+    sort_fields = {"name": "name", "price": "price", "-price": "-price"}
+    sort = request.GET.get("sort", "name")
+    items = items.order_by(sort_fields.get(sort, "name"), "id")
+    page_obj = Paginator(items, 6).get_page(request.GET.get("page"))
+    return render(request, "products/product_list.html", {
+        "products": page_obj, "page_obj": page_obj, "min_price": min_price,
+        "query": query, "sort": sort, "error": error,
+    })
 
 
 def product_detail(request, product_id):
-    """Передаёт товар из SQLite в шаблон подробной страницы."""
-    product = fetch_one(
-        "SELECT id, name, price, description FROM products WHERE id = ?",
-        (product_id,),
-    )
-    return render(
-        request,
-        "products/product_detail.html",
-        {"product": product},
-        status=404 if product is None else 200,
-    )
+    product = get_object_or_404(Product, pk=product_id)
+    return render(request, "products/product_detail.html", {"product": product})

@@ -1,41 +1,39 @@
-"""Представления раздела поставщиков, работающие с SQLite."""
+"""Список и карточка поставщика на Django ORM."""
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, render
 
-from django.shortcuts import render
-
-from db.repository import SUPPLIER_LIST_SQL, fetch_all, fetch_one
+from .models import Supplier
+from orm_utils import casefold_exact_search, casefold_search
 
 
 def suppliers(request):
-    """Показывает поставщиков и фильтрует их по минимальному рейтингу."""
+    query = request.GET.get("q", "").strip()[:100]
     min_rating = request.GET.get("min_rating", "").strip()
+    exact_name = request.GET.get("exact_name", "").strip()[:100]
+    items = Supplier.objects.all()
+    if exact_name:
+        items = casefold_exact_search(items, "name", exact_name)
+    error = None
+    if query:
+        items = casefold_search(items, query, ["name", "contact"])
     if min_rating:
         try:
-            items = fetch_all(
-                "SELECT id, name, contact, rating FROM suppliers "
-                "WHERE rating >= ? ORDER BY rating DESC, name",
-                (int(min_rating),),
-            )
+            rating = int(min_rating)
+            if rating not in range(1, 6):
+                raise ValueError
+            items = items.filter(rating__gte=rating)
         except ValueError:
-            items = fetch_all(SUPPLIER_LIST_SQL)
+            error = "Рейтинг должен быть целым числом от 1 до 5."
             min_rating = ""
-    else:
-        items = fetch_all(SUPPLIER_LIST_SQL)
-    return render(
-        request,
-        "suppliers/supplier_list.html",
-        {"suppliers": items, "min_rating": min_rating},
-    )
+    items = items.order_by("-rating", "name")
+    page_obj = Paginator(items, 6).get_page(request.GET.get("page"))
+    return render(request, "suppliers/supplier_list.html", {
+        "suppliers": page_obj, "page_obj": page_obj,
+        "min_rating": min_rating, "query": query,
+        "exact_name": exact_name, "error": error,
+    })
 
 
 def supplier_detail(request, supplier_id):
-    """Передаёт поставщика из SQLite в шаблон подробной страницы."""
-    supplier = fetch_one(
-        "SELECT id, name, contact, rating FROM suppliers WHERE id = ?",
-        (supplier_id,),
-    )
-    return render(
-        request,
-        "suppliers/supplier_detail.html",
-        {"supplier": supplier},
-        status=404 if supplier is None else 200,
-    )
+    supplier = get_object_or_404(Supplier, pk=supplier_id)
+    return render(request, "suppliers/supplier_detail.html", {"supplier": supplier})

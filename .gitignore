@@ -7,3 +7,6 @@ __pycache__/
 .DS_Store
 db.sqlite3
 staticfiles/
+
+*.sqlite3-journal
+.coverage

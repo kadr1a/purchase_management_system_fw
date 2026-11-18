@@ -1,10 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Заявки — Закупки{% endblock %}
+{% block title %}Заявки — Закупки
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
+{% endblock %}
 {% block content %}
 <div class="page-heading"><div><p class="eyebrow">ВНУТРЕННИЕ ЗАПРОСЫ</p><h1>Заявки на закупку</h1><p class="text-muted">Состав заявок, назначение и текущий статус согласования.</p></div></div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4"><label class="form-label" for="q">Поиск заявки</label><input class="form-control" id="q" name="q" value="{{ query }}"></div>
+    <div class="col-md-3"><label class="form-label" for="status">Статус</label><select class="form-select" id="status" name="status"><option value="">Все</option><option {% if status == "Черновик" %}selected{% endif %}>Черновик</option><option {% if status == "Согласована" %}selected{% endif %}>Согласована</option><option {% if status == "Отклонена" %}selected{% endif %}>Отклонена</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="exclude_status">Исключить статус</label><select class="form-select" id="exclude_status" name="exclude_status"><option value="">Не исключать</option><option {% if exclude_status == "Черновик" %}selected{% endif %}>Черновик</option><option {% if exclude_status == "Согласована" %}selected{% endif %}>Согласована</option><option {% if exclude_status == "Отклонена" %}selected{% endif %}>Отклонена</option></select></div>
+    <div class="col-md-3"><label class="form-label" for="sort">Сортировка</label><select class="form-select" id="sort" name="sort"><option value="id" {% if sort == "id" %}selected{% endif %}>По ID</option><option value="purpose" {% if sort == "purpose" %}selected{% endif %}>По назначению</option><option value="status" {% if sort == "status" %}selected{% endif %}>По статусу</option></select></div>
+    <div class="col-auto"><button class="btn btn-primary">Применить</button></div>
+</form>
+
 <p class="result-count">Всего заявок: {{ applications|length }}</p>
 <div class="row g-3">
 {% for application in applications %}<div class="col-lg-6">{% include "applications/includes/application_card.html" %}</div>
 {% empty %}<div class="col-12"><div class="empty-state">Заявки пока не созданы.</div></div>{% endfor %}
 </div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Навигация по страницам" class="mt-4"><ul class="pagination">
+{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a></li>{% endif %}
+<li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a></li>{% endif %}
+</ul></nav>{% endif %}
+
 {% endblock %}

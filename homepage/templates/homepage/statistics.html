@@ -6,6 +6,12 @@
 {% for label, value in stat_items %}<div class="col-sm-6 col-lg-3"><div class="card entity-card"><div class="card-body"><p class="text-muted">{{ label }}</p><h2>{{ value }}</h2></div></div></div>{% endfor %}
 <div class="col-sm-6 col-lg-3"><div class="card entity-card"><div class="card-body"><p class="text-muted">Сумма оформленных заказов</p><h2>{{ stats.active_order_total|floatformat:2 }} ₽</h2></div></div></div>
 </div>
+<h2 class="h4 mt-4">Цены каталога</h2>
+<div class="row g-3 mb-4">
+<div class="col-md-4"><div class="card entity-card"><div class="card-body"><p class="text-muted">Минимальная цена</p><strong>{{ price_metrics.min_price|default:0|floatformat:2 }} ₽</strong></div></div></div>
+<div class="col-md-4"><div class="card entity-card"><div class="card-body"><p class="text-muted">Средняя цена</p><strong>{{ price_metrics.average_price|default:0|floatformat:2 }} ₽</strong></div></div></div>
+<div class="col-md-4"><div class="card entity-card"><div class="card-body"><p class="text-muted">Максимальная цена</p><strong>{{ price_metrics.max_price|default:0|floatformat:2 }} ₽</strong></div></div></div>
+</div>
 <h2 class="h4 mt-4">Стоимость заявок</h2>
 <div class="table-responsive"><table class="table"><thead><tr><th>Заявка</th><th>Назначение</th><th>Сумма</th></tr></thead><tbody>
 {% for item in application_totals %}<tr><td>{{ item.id }}</td><td>{{ item.purpose }}</td><td>{{ item.application_total|floatformat:2 }} ₽</td></tr>
