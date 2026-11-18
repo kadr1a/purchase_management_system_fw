@@ -3,7 +3,7 @@ from applications import (
     approve_application,
     create_application,
 )
-from models import Product, Supplier
+from models import Product
 from orders import create_order
 from storage import load_data, save_data
 from suppliers import add_supplier

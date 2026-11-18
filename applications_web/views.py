@@ -1,24 +1,37 @@
-"""Представления раздела заявок на закупку."""
+"""Представления заявок на закупку, использующие SQL-запросы."""
+
 from django.shortcuts import render
 
-from web_utils import get_project_data
+from db.repository import APPLICATION_LIST_SQL, fetch_all, fetch_one
 
 
 def applications(request):
-    """Передаёт список заявок в шаблон."""
-    context = {"applications": get_project_data()["applications"]}
-    return render(request, "applications/application_list.html", context)
+    """Показывает заявки с количеством позиций и общей стоимостью."""
+    items = fetch_all(APPLICATION_LIST_SQL)
+    return render(
+        request,
+        "applications/application_list.html",
+        {"applications": items},
+    )
 
 
 def application_detail(request, application_id):
-    """Передаёт заявку или None в шаблон подробной страницы."""
-    items = get_project_data()["applications"]
-    application = next(
-        (item for item in items if item.id == application_id), None
+    """Показывает заявку и связанные с ней товарные позиции."""
+    application = fetch_one(
+        "SELECT id, purpose, status FROM applications WHERE id = ?",
+        (application_id,),
+    )
+    items = fetch_all(
+        "SELECT p.id, p.name, p.price, ai.quantity, "
+        "p.price * ai.quantity AS line_total "
+        "FROM application_items AS ai "
+        "JOIN products AS p ON p.id = ai.product_id "
+        "WHERE ai.application_id = ? ORDER BY p.name",
+        (application_id,),
     )
     return render(
         request,
         "applications/application_detail.html",
-        {"application": application},
+        {"application": application, "items": items},
         status=404 if application is None else 200,
     )

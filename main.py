@@ -7,7 +7,6 @@ from applications import (
     find_application,
     show_applications,
 )
-from models import Product
 from orders import cancel_order, create_order, find_order, show_orders
 from products import (
     add_product,

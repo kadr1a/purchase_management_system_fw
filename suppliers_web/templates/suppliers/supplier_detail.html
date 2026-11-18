@@ -2,7 +2,9 @@
 {% block title %}{% if supplier %}{{ supplier.name }}{% else %}Поставщик не найден{% endif %} — Закупки{% endblock %}
 {% block content %}
 {% if supplier %}<p class="eyebrow">КАРТОЧКА ПОСТАВЩИКА</p><h1>{{ supplier.name }}</h1>
-<div class="card entity-card detail-card"><div class="card-body"><p><strong>ID:</strong> {{ supplier.id }}</p><p><strong>Контакт:</strong> {{ supplier.contact|default:"Не указан" }}</p><p><strong>Рейтинг:</strong> {{ supplier.rating }}/5</p></div></div>
-{% else %}<div class="empty-state"><h1 class="h3">Поставщик не найден</h1><p>Поставщик с указанным идентификатором отсутствует.</p></div>{% endif %}
+<div class="card entity-card detail-card"><div class="card-body">
+<p><strong>Идентификатор:</strong> {{ supplier.id }}</p><p><strong>Контакт:</strong> {{ supplier.contact|default:"Не указан" }}</p><p><strong>Рейтинг:</strong> {{ supplier.rating }}/5</p>
+</div></div>
+{% else %}<div class="empty-state"><h1 class="h3">Поставщик не найден</h1></div>{% endif %}
 <a class="btn btn-outline-secondary mt-3" href="{% url 'suppliers:list' %}">← К списку поставщиков</a>
 {% endblock %}

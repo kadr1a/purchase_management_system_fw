@@ -2,12 +2,16 @@
 {% block title %}Товары — Закупки{% endblock %}
 {% block content %}
 <div class="page-heading"><div><p class="eyebrow">КАТАЛОГ</p><h1>Товары</h1><p class="text-muted">Товары, доступные для включения в заявки на закупку.</p></div></div>
-<p class="result-count">Всего товаров: {{ products|length }}</p>
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label for="min_price" class="form-label">Минимальная цена, ₽</label><input class="form-control" id="min_price" name="min_price" type="number" min="0" step="0.01" value="{{ min_price }}"></div>
+    <div class="col-auto"><button class="btn btn-primary" type="submit">Найти</button> <a class="btn btn-outline-secondary" href="{% url 'products:list' %}">Сбросить</a></div>
+</form>
+<p class="result-count">Найдено товаров: {{ products|length }}</p>
 <div class="row g-3">
     {% for product in products %}
         <div class="col-md-6 col-xl-4">{% include "products/includes/product_card.html" %}</div>
     {% empty %}
-        <div class="col-12"><div class="empty-state">Товары пока не добавлены.</div></div>
+        <div class="col-12"><div class="empty-state">Товары по заданным условиям не найдены.</div></div>
     {% endfor %}
 </div>
 {% endblock %}

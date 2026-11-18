@@ -23,6 +23,7 @@ def test_main_page_uses_base_template_and_navigation():
         ("suppliers:list", "Поставщики"),
         ("applications:list", "Заявки на закупку"),
         ("orders:list", "Заказы поставщикам"),
+        ("homepage:statistics", "Статистика закупок"),
     ],
 )
 def test_section_pages_render(route_name, heading):
@@ -52,3 +53,12 @@ def test_custom_404_page():
     assert response.status_code == 404
     assert "Страница не найдена" in response.content.decode()
     assert "Вернуться на главную" in response.content.decode()
+
+
+def test_product_price_filter_uses_query_parameter():
+    """Страница каталога принимает минимальную цену через GET-параметр."""
+    response = Client().get(reverse("products:list"), {"min_price": "3000"})
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert "Монитор 24 дюйма" in html
+    assert "Мышь" not in html
