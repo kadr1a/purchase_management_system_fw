@@ -1,0 +1,14 @@
+"""Корневая маршрутизация веб-приложения."""
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("homepage.urls")),
+    path("products/", include("products_web.urls")),
+    path("suppliers/", include("suppliers_web.urls")),
+    path("applications/", include("applications_web.urls")),
+    path("orders/", include("orders_web.urls")),
+]
+
+handler404 = "homepage.views.page_not_found"
