@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if order %}Заказ {{ order.id }}{% else %}Заказ не найден{% endif %} — Закупки{% endblock %}
+{% block content %}
+{% if order %}<p class="eyebrow">КАРТОЧКА ЗАКАЗА</p><h1>Заказ {{ order.id }}</h1>
+<div class="card entity-card detail-card"><div class="card-body">
+<p><strong>Заявка:</strong> <a href="{% url 'applications:detail' order.application.id %}">{{ order.application.id }} — {{ order.application.purpose }}</a></p>
+<p><strong>Поставщик:</strong> <a href="{% url 'suppliers:detail' order.supplier.id %}">{{ order.supplier.name }}</a></p>
+<p><strong>Сумма:</strong> <span class="price-value">{{ order.total|floatformat:2 }} ₽</span></p>
+<p><strong>Статус:</strong> <span class="badge {% if order.status == 'Отменён' %}text-bg-secondary{% else %}text-bg-success{% endif %}">{{ order.status }}</span></p>
+</div></div>
+{% else %}<div class="empty-state"><h1 class="h3">Заказ не найден</h1><p>Заказ с указанным идентификатором отсутствует.</p></div>{% endif %}
+<a class="btn btn-outline-secondary mt-3" href="{% url 'orders:list' %}">← К списку заказов</a>
+{% endblock %}

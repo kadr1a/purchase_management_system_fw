@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Заказы — Закупки{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ЗАКУПОЧНЫЕ ЗАКАЗЫ</p><h1>Заказы поставщикам</h1><p class="text-muted">Заказы, связывающие согласованные заявки и поставщиков.</p></div></div>
+<p class="result-count">Всего заказов: {{ orders|length }}</p>
+<div class="row g-3">
+{% for order in orders %}<div class="col-lg-6">{% include "orders/includes/order_card.html" %}</div>
+{% empty %}<div class="col-12"><div class="empty-state">Заказы пока не оформлены.</div></div>{% endfor %}
+</div>
+{% endblock %}

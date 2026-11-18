@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{% if application %}Заявка {{ application.id }}{% else %}Заявка не найдена{% endif %} — Закупки{% endblock %}
+{% block content %}
+{% if application %}
+<p class="eyebrow">ЗАЯВКА НА ЗАКУПКУ</p><h1>Заявка {{ application.id }}</h1>
+<div class="card entity-card detail-card mb-4"><div class="card-body">
+<p><strong>Назначение:</strong> {{ application.purpose|default:"Не указано" }}</p>
+<p><strong>Статус:</strong> <span class="badge text-bg-info">{{ application.status }}</span></p>
+<p><strong>Количество позиций:</strong> {{ application.product_items|length }}</p>
+</div></div>
+<h2 class="h4">Состав заявки</h2>
+<div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Товар</th><th>Количество</th><th>Цена</th><th>Сумма</th></tr></thead><tbody>
+{% for product, quantity in application.product_items %}<tr><td>{{ product.name }}</td><td>{{ quantity }}</td><td>{{ product.price|floatformat:2 }} ₽</td><td>{{ product.price|floatformat:2 }} ₽ × {{ quantity }}</td></tr>
+{% empty %}<tr><td colspan="4" class="text-muted">В заявке пока нет товаров.</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="total-line">Итого: {{ application.calculate_total|floatformat:2 }} ₽</p>
+{% else %}<div class="empty-state"><h1 class="h3">Заявка не найдена</h1><p>Заявка с указанным идентификатором отсутствует.</p></div>{% endif %}
+<a class="btn btn-outline-secondary mt-3" href="{% url 'applications:list' %}">← К списку заявок</a>
+{% endblock %}

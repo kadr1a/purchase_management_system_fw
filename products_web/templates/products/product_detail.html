@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}{{ product.name }}{% else %}Товар не найден{% endif %} — Закупки{% endblock %}
+{% block content %}
+{% if product %}
+    <p class="eyebrow">КАРТОЧКА ТОВАРА</p><h1>{{ product.name|default:"Без названия" }}</h1>
+    <div class="card entity-card detail-card"><div class="card-body">
+        <p><strong>Идентификатор:</strong> {{ product.id }}</p>
+        <p><strong>Цена:</strong> <span class="price-value">{{ product.price|floatformat:2 }} ₽</span></p>
+        <p><strong>Описание:</strong> {{ product.description|default:"Описание не указано" }}</p>
+    </div></div>
+{% else %}
+    <div class="empty-state"><h1 class="h3">Товар не найден</h1><p>Товар с указанным идентификатором отсутствует.</p></div>
+{% endif %}
+<a class="btn btn-outline-secondary mt-3" href="{% url 'products:list' %}">← К списку товаров</a>
+{% endblock %}

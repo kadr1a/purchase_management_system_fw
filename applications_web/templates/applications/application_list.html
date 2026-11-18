@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Заявки — Закупки{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ВНУТРЕННИЕ ЗАПРОСЫ</p><h1>Заявки на закупку</h1><p class="text-muted">Состав заявок, назначение и текущий статус согласования.</p></div></div>
+<p class="result-count">Всего заявок: {{ applications|length }}</p>
+<div class="row g-3">
+{% for application in applications %}<div class="col-lg-6">{% include "applications/includes/application_card.html" %}</div>
+{% empty %}<div class="col-12"><div class="empty-state">Заявки пока не созданы.</div></div>{% endfor %}
+</div>
+{% endblock %}

@@ -1,8 +1,10 @@
+"""Маршруты заявок."""
 from django.urls import path
+
 from . import views
 
+app_name = "applications"
 urlpatterns = [
-    path("", views.applications, name="applications"),
-    path("<str:application_id>/", views.application_detail,
-         name="application_detail"),
+    path("", views.applications, name="list"),
+    path("<str:application_id>/", views.application_detail, name="detail"),
 ]
