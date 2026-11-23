@@ -9,14 +9,11 @@
 
 {% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">ВНУТРЕННИЕ ЗАПРОСЫ</p><h1>Заявки на закупку</h1><p class="text-muted">Состав заявок, назначение и текущий статус согласования.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">ВНУТРЕННИЕ ЗАПРОСЫ</p><h1>Заявки на закупку</h1><p class="text-muted">Состав заявок, назначение и текущий статус согласования.</p></div><a class="btn btn-primary" href="{% url 'applications:create' %}">Создать заявку</a></div>
 
 <form method="get" class="row g-2 align-items-end mb-3">
-    <div class="col-md-4"><label class="form-label" for="q">Поиск заявки</label><input class="form-control" id="q" name="q" value="{{ query }}"></div>
-    <div class="col-md-3"><label class="form-label" for="status">Статус</label><select class="form-select" id="status" name="status"><option value="">Все</option><option {% if status == "Черновик" %}selected{% endif %}>Черновик</option><option {% if status == "Согласована" %}selected{% endif %}>Согласована</option><option {% if status == "Отклонена" %}selected{% endif %}>Отклонена</option></select></div>
-    <div class="col-md-3"><label class="form-label" for="exclude_status">Исключить статус</label><select class="form-select" id="exclude_status" name="exclude_status"><option value="">Не исключать</option><option {% if exclude_status == "Черновик" %}selected{% endif %}>Черновик</option><option {% if exclude_status == "Согласована" %}selected{% endif %}>Согласована</option><option {% if exclude_status == "Отклонена" %}selected{% endif %}>Отклонена</option></select></div>
-    <div class="col-md-3"><label class="form-label" for="sort">Сортировка</label><select class="form-select" id="sort" name="sort"><option value="id" {% if sort == "id" %}selected{% endif %}>По ID</option><option value="purpose" {% if sort == "purpose" %}selected{% endif %}>По назначению</option><option value="status" {% if sort == "status" %}selected{% endif %}>По статусу</option></select></div>
-    <div class="col-auto"><button class="btn btn-primary">Применить</button></div>
+    {% for field in filter_form %}<div class="col-md-3">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}
+    <div class="col-auto"><button class="btn btn-primary" type="submit">Применить</button> <a class="btn btn-outline-secondary" href="{% url 'applications:list' %}">Сбросить</a></div>
 </form>
 
 <p class="result-count">Всего заявок: {{ applications|length }}</p>

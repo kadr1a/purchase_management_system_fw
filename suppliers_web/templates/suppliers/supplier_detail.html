@@ -6,5 +6,5 @@
 <p><strong>Идентификатор:</strong> {{ supplier.id }}</p><p><strong>Контакт:</strong> {{ supplier.contact|default:"Не указан" }}</p><p><strong>Рейтинг:</strong> {{ supplier.rating }}/5</p>
 </div></div>
 {% else %}<div class="empty-state"><h1 class="h3">Поставщик не найден</h1></div>{% endif %}
-<a class="btn btn-outline-secondary mt-3" href="{% url 'suppliers:list' %}">← К списку поставщиков</a>
+<a class="btn btn-primary mt-3" href="{% url 'suppliers:update' supplier.id %}">Редактировать</a> <a class="btn btn-outline-secondary mt-3" href="{% url 'suppliers:list' %}">← К списку поставщиков</a>
 {% endblock %}

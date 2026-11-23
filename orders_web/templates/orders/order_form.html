@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Оформление заказа — Закупки{% endblock %}
+{% block content %}
+<p class="eyebrow">ЗАКУПОЧНЫЕ ЗАКАЗЫ</p><h1 class="h2">Оформление заказа поставщику</h1>
+<p class="text-muted">Сумма заказа рассчитывается автоматически по составу выбранной заявки.</p>
+<form method="post" class="card entity-card p-4 mt-3">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" with form=form %}
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Оформить заказ</button><a class="btn btn-outline-secondary" href="{% url 'orders:list' %}">Отмена</a></div>
+</form>
+{% endblock %}

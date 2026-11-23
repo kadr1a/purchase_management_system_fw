@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{% if is_create %}Новый товар{% else %}Редактирование товара{% endif %} — Закупки{% endblock %}
+{% block content %}
+<p class="eyebrow">КАТАЛОГ</p>
+<h1 class="h2">{% if is_create %}Добавление товара{% else %}Редактирование товара{% endif %}</h1>
+<form method="post" enctype="multipart/form-data" class="card entity-card p-4 mt-3">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" with form=form %}
+    {% if product.image %}<p>Текущее изображение:</p><img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid mb-3" style="max-width: 240px">{% endif %}
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">{% if is_create %}Создать товар{% else %}Сохранить изменения{% endif %}</button><a class="btn btn-outline-secondary" href="{% url 'products:list' %}">Отмена</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% if is_create %}Новая заявка{% else %}Редактирование заявки{% endif %} — Закупки{% endblock %}
+{% block content %}
+<p class="eyebrow">ВНУТРЕННИЕ ЗАПРОСЫ</p>
+<h1 class="h2">{% if is_create %}Создание заявки{% else %}Редактирование заявки{% endif %}</h1>
+<form method="post" class="card entity-card p-4 mt-3">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" with form=form %}
+    <h2 class="h5 mt-3">Состав заявки</h2>
+    {{ formset.management_form }}
+    {% for item_form in formset %}
+        <div class="border rounded p-3 mb-3">
+            {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+            {% for field in item_form.visible_fields %}{% if field.name != "DELETE" %}
+                <div class="mb-2">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+            {% endif %}{% endfor %}
+            {% if item_form.instance.pk %}<div class="form-check">{{ item_form.DELETE }} <label class="form-check-label" for="{{ item_form.DELETE.id_for_label }}">Удалить позицию</label></div>{% endif %}
+            {% for error in item_form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+    {% endfor %}
+    {% for error in formset.non_form_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Сохранить заявку</button><a class="btn btn-outline-secondary" href="{% url 'applications:list' %}">Отмена</a></div>
+</form>
+{% endblock %}

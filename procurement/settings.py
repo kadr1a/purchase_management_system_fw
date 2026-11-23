@@ -66,5 +66,7 @@ USE_I18N = True
 USE_TZ = True
 INTERNAL_IPS = ["127.0.0.1"]
 STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STATICFILES_DIRS = []
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

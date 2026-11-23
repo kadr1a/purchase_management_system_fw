@@ -9,5 +9,5 @@
 {% empty %}<tr><td colspan="4">В заявке пока нет товаров.</td></tr>{% endfor %}
 </tbody></table></div>
 {% else %}<div class="empty-state"><h1 class="h3">Заявка не найдена</h1></div>{% endif %}
-<a class="btn btn-outline-secondary mt-3" href="{% url 'applications:list' %}">← К списку заявок</a>
+<a class="btn btn-primary mt-3" href="{% url 'applications:update' application.id %}">Редактировать заявку</a> <a class="btn btn-outline-secondary mt-3" href="{% url 'applications:list' %}">← К списку заявок</a>
 {% endblock %}

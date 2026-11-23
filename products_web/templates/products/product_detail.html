@@ -4,6 +4,7 @@
 {% if product %}
     <p class="eyebrow">КАРТОЧКА ТОВАРА</p><h1>{{ product.name|default:"Без названия" }}</h1>
     <div class="card entity-card detail-card"><div class="card-body">
+        {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid mb-3" style="max-width: 420px">{% endif %}
         <p><strong>Идентификатор:</strong> {{ product.id }}</p>
         <p><strong>Цена:</strong> <span class="price-value">{{ product.price|floatformat:2 }} ₽</span></p>
         <p><strong>Описание:</strong> {{ product.description|default:"Описание не указано" }}</p>
@@ -11,5 +12,5 @@
 {% else %}
     <div class="empty-state"><h1 class="h3">Товар не найден</h1><p>Товар с указанным идентификатором отсутствует.</p></div>
 {% endif %}
-<a class="btn btn-outline-secondary mt-3" href="{% url 'products:list' %}">← К списку товаров</a>
+<a class="btn btn-primary mt-3" href="{% url 'products:update' product.id %}">Редактировать</a> <a class="btn btn-outline-secondary mt-3" href="{% url 'products:list' %}">← К списку товаров</a>
 {% endblock %}

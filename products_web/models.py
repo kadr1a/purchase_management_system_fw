@@ -35,6 +35,9 @@ class Product(models.Model):
     description = models.TextField(
         blank=True, default="", verbose_name="Описание",
     )
+    image = models.ImageField(
+        upload_to="products/", blank=True, null=True, verbose_name="Изображение",
+    )
 
     class Meta:
         ordering = ["name"]
