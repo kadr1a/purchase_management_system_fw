@@ -24,7 +24,7 @@ def sample_data():
         rating=5,
     )
     application = Application.objects.create(
-        id="A900", purpose="Оборудование кабинета", status="Согласована",
+        id="A900", purpose="Оборудование кабинета", status=Application.Status.APPROVED,
     )
     ApplicationItem.objects.create(
         application=application, product=product, quantity=2,
@@ -81,7 +81,7 @@ def test_order_cancel_method(sample_data):
     order = sample_data[3]
     order.cancel()
     order.refresh_from_db()
-    assert order.status == "Отменён"
+    assert order.status == PurchaseOrder.Status.CANCELLED
     with pytest.raises(ValueError):
         order.cancel()
 
@@ -140,3 +140,136 @@ def test_statistics_use_orm_aggregates(sample_data):
     assert "Минимальная цена" in html
     assert "Средняя цена" in html
     assert "Максимальная цена" in html
+
+
+def test_generated_application_item_total_uses_price_snapshot(sample_data):
+    product, _, application, _ = sample_data
+    item = application.items.get()
+
+    assert item.unit_price == Decimal("1200.00")
+    assert item.line_total == Decimal("2400.00")
+
+    product.price = Decimal("1500.00")
+    product.save(update_fields=["price"])
+    item.refresh_from_db()
+
+    assert item.unit_price == Decimal("1200.00")
+    assert item.line_total == Decimal("2400.00")
+
+
+def test_product_slug_and_absolute_url(sample_data):
+    product = sample_data[0]
+
+    assert product.slug == "testovyy-monitor"
+    assert product.get_absolute_url() == f"/products/slug/{product.slug}/"
+    response = Client().get(product.get_absolute_url())
+
+    assert response.status_code == 200
+    assert product.name in response.content.decode()
+
+
+def test_duplicate_product_names_get_unique_slugs():
+    first = Product.objects.create(
+        id="SLUG1", name="Одинаковый товар", price=Decimal("10.00"),
+    )
+    second = Product.objects.create(
+        id="SLUG2", name="Одинаковый товар", price=Decimal("12.00"),
+    )
+
+    assert first.slug == "odinakovyy-tovar"
+    assert second.slug == "odinakovyy-tovar-2"
+
+
+def test_global_context_processor_exposes_entity_counts(sample_data):
+    response = Client().get(reverse("homepage:index"))
+
+    assert response.status_code == 200
+    assert response.context["procurement_counts"] == {
+        "products": 1,
+        "suppliers": 1,
+        "applications": 1,
+        "orders": 1,
+    }
+
+
+def test_admin_registers_all_procurement_models():
+    from django.contrib import admin
+
+    from applications_web.models import Application, ApplicationItem
+    from orders_web.models import PurchaseOrder
+    from suppliers_web.models import Supplier
+
+    assert Product in admin.site._registry
+    assert Supplier in admin.site._registry
+    assert Application in admin.site._registry
+    assert ApplicationItem in admin.site._registry
+    assert PurchaseOrder in admin.site._registry
+
+
+def test_admin_configuration_includes_search_filters_and_inlines():
+    from django.contrib import admin
+
+    from applications_web.models import Application
+    from orders_web.models import PurchaseOrder
+    from suppliers_web.models import Supplier
+
+    assert admin.site._registry[Product].search_fields
+    assert admin.site._registry[Supplier].list_filter == ("rating",)
+    assert admin.site._registry[Application].inlines
+    assert admin.site._registry[PurchaseOrder].list_select_related == (
+        "application", "supplier",
+    )
+
+
+def test_admin_pages_open_for_superuser(sample_data):
+    from django.contrib.auth import get_user_model
+
+    user = get_user_model().objects.create_superuser(
+        username="pr10-admin", email="admin@example.com", password="safe-test-password",
+    )
+    client = Client()
+    client.force_login(user)
+
+    admin_urls = [
+        "/admin/",
+        "/admin/products_web/product/",
+        "/admin/suppliers_web/supplier/",
+        "/admin/applications_web/application/",
+        "/admin/applications_web/applicationitem/",
+        "/admin/orders_web/purchaseorder/",
+    ]
+    for url in admin_urls:
+        response = client.get(url)
+        assert response.status_code == 200, url
+
+    application = sample_data[2]
+    inline_response = client.get(f"/admin/applications_web/application/{application.pk}/change/")
+    assert inline_response.status_code == 200
+
+
+def test_application_queryset_manager_summary(sample_data):
+    application = sample_data[2]
+    summarized = Application.objects.with_summary().get(pk=application.pk)
+
+    assert summarized.item_count == 1
+    assert summarized.application_total == Decimal("2400.00")
+
+
+def test_application_queryset_summary_keeps_applications_without_items():
+    application = Application.objects.create(
+        id="A-EMPTY", purpose="Пустая заявка", status=Application.Status.DRAFT,
+    )
+    summarized = Application.objects.with_summary().get(pk=application.pk)
+
+    assert summarized.item_count == 0
+    assert summarized.application_total == Decimal("0.00")
+
+
+def test_purchase_order_queryset_manager_filters_statuses(sample_data):
+    order = sample_data[3]
+
+    assert PurchaseOrder.objects.ordered().get() == order
+    assert PurchaseOrder.objects.cancelled().count() == 0
+    order.cancel()
+    assert PurchaseOrder.objects.ordered().count() == 0
+    assert PurchaseOrder.objects.cancelled().get() == order

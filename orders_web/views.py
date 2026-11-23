@@ -20,7 +20,7 @@ def orders(request):
         items = casefold_search(
             items, query, ["id", "application__purpose", "supplier__name"],
         )
-    if status in ["Оформлен", "Отменён"]:
+    if status in PurchaseOrder.Status.values:
         items = items.filter(status=status)
     elif status:
         status = ""

@@ -1,7 +1,7 @@
 """Главная страница и аналитика на Django ORM."""
 from decimal import Decimal
 
-from django.db.models import Avg, F, Max, Min, Sum, DecimalField, ExpressionWrapper
+from django.db.models import Avg, Max, Min, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import render
 
@@ -18,7 +18,7 @@ def index(request):
         "applications_count": Application.objects.count(),
         "orders_count": PurchaseOrder.objects.count(),
         "active_order_total": (
-            PurchaseOrder.objects.filter(status="Оформлен")
+            PurchaseOrder.objects.ordered()
             .aggregate(total=Coalesce(Sum("total"), Decimal("0.00")))["total"]
         ),
     }
@@ -42,18 +42,13 @@ def statistics(request):
         "applications_count": Application.objects.count(),
         "orders_count": PurchaseOrder.objects.count(),
         "active_order_total": (
-            PurchaseOrder.objects.filter(status="Оформлен")
+            PurchaseOrder.objects.ordered()
             .aggregate(total=Coalesce(Sum("total"), Decimal("0.00")))["total"]
         ),
     }
-    line_total = ExpressionWrapper(
-        F("items__product__price") * F("items__quantity"),
-        output_field=DecimalField(max_digits=14, decimal_places=2),
-    )
     application_totals = (
-        Application.objects.annotate(
-            application_total=Coalesce(Sum(line_total), Decimal("0.00")),
-        ).values("id", "purpose", "application_total")
+        Application.objects.with_summary()
+        .values("id", "purpose", "application_total")
         .order_by("-application_total", "id")
     )
     price_metrics = Product.objects.aggregate(

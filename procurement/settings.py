@@ -1,4 +1,5 @@
 """Настройки Django-проекта системы управления закупками."""
+from importlib.util import find_spec
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,6 +20,10 @@ INSTALLED_APPS = [
     "applications_web",
     "orders_web",
 ]
+
+DEBUG_TOOLBAR_ENABLED = DEBUG and find_spec("debug_toolbar") is not None
+if DEBUG_TOOLBAR_ENABLED:
+    INSTALLED_APPS.append("debug_toolbar")
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -28,6 +33,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+if DEBUG_TOOLBAR_ENABLED:
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
 ROOT_URLCONF = "procurement.urls"
 TEMPLATES = [
     {
@@ -39,6 +46,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "homepage.context_processors.procurement_context",
             ],
         },
     },
@@ -56,6 +64,7 @@ LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
 USE_TZ = True
+INTERNAL_IPS = ["127.0.0.1"]
 STATIC_URL = "/static/"
 STATICFILES_DIRS = []
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

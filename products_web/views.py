@@ -37,3 +37,9 @@ def products(request):
 def product_detail(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     return render(request, "products/product_detail.html", {"product": product})
+
+
+def product_detail_by_slug(request, slug):
+    """Открывает карточку товара по уникальному URL-slug."""
+    product = get_object_or_404(Product, slug=slug)
+    return render(request, "products/product_detail.html", {"product": product})

@@ -3,10 +3,12 @@ from django.db import models
 
 
 class Supplier(models.Model):
-    id = models.CharField(primary_key=True, max_length=32)
-    name = models.CharField(max_length=200)
-    contact = models.CharField(max_length=255, blank=True, default="")
-    rating = models.PositiveSmallIntegerField()
+    id = models.CharField(primary_key=True, max_length=32, verbose_name="Идентификатор")
+    name = models.CharField(max_length=200, verbose_name="Название поставщика")
+    contact = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="Контактные данные",
+    )
+    rating = models.PositiveSmallIntegerField(verbose_name="Рейтинг")
 
     class Meta:
         ordering = ["-rating", "name"]

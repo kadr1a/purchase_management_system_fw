@@ -1,15 +1,24 @@
-"""Проверки слоя SQLite и импорта данных."""
+"""Проверки слоя SQLite и импорта данных в изолированной тестовой БД."""
 
 import sqlite3
 
-from db.database import DB_PATH, initialize_database
+import pytest
+
+from db import database
 from db.import_json import import_json
 
 
-def test_json_data_imports_to_sqlite():
-    """Импорт создаёт таблицы и переносит записи исходных JSON-файлов."""
+@pytest.fixture
+def isolated_sqlite_database(monkeypatch, tmp_path):
+    test_database = tmp_path / "procurement-test.sqlite3"
+    monkeypatch.setattr(database, "DB_PATH", test_database)
+    return test_database
+
+
+def test_json_data_imports_to_sqlite(isolated_sqlite_database):
+    """Импорт создаёт таблицы и переносит записи JSON в отдельную БД."""
     import_json()
-    connection = sqlite3.connect(DB_PATH)
+    connection = sqlite3.connect(isolated_sqlite_database)
     try:
         products_count = connection.execute(
             "SELECT COUNT(*) FROM products"
@@ -26,11 +35,11 @@ def test_json_data_imports_to_sqlite():
         connection.close()
 
 
-def test_schema_initialization_is_repeatable():
+def test_schema_initialization_is_repeatable(isolated_sqlite_database):
     """Схему можно применить повторно без удаления существующих таблиц."""
-    initialize_database()
-    initialize_database()
-    connection = sqlite3.connect(DB_PATH)
+    database.initialize_database()
+    database.initialize_database()
+    connection = sqlite3.connect(isolated_sqlite_database)
     try:
         tables = {
             row[0]
